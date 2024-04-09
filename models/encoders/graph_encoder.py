@@ -262,23 +262,15 @@ class GraphEncoder_MultiAggr(nn.Module):
             edge_dim=edge_dim
         )
         self.graph_linear = nn.Linear(node_dim * 8, node_dim)
-        # self.graph_linear = nn.Linear(node_dim, node_dim)
-        # self.node_norm = nn.LayerNorm(node_dim)
-        # self.graph_norm = nn.LayerNorm(node_dim)
 
     def forward(self, node_feature, edge_index, edge_feature, batch):
         for i in range(self.num_layers - 1):
             node_feature = self.node_convs[i](node_feature, edge_index, edge_feature)
-            # node_feature = node_feature.relu()
             node_feature = F.mish(node_feature)
             node_feature = self.norms[i](node_feature)
-            # node_feature = dropout_path(edge_index, p=0.2)
             node_feature = F.dropout(node_feature, p=0.25, training=self.training)
         node_feature = self.node_convs[-1](node_feature, edge_index, edge_feature)
         local_feature = self.node_linear(node_feature)
-        # local_feature = self.node_norm(local_feature)
-        # global_feature = global_mean_pool(node_feature, batch)
-        # global_feature = self.graph_norm(self.graph_linear(global_feature))
         global_feature = self.graph_readout(local_feature, edge_index, edge_feature)
         global_feature = global_mean_pool(global_feature, batch)
         global_feature = self.graph_linear(global_feature)
