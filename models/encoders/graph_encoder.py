@@ -280,6 +280,7 @@ class GraphEncoder_MultiAggr(nn.Module):
         # global_feature = global_mean_pool(node_feature, batch)
         # global_feature = self.graph_norm(self.graph_linear(global_feature))
         global_feature = self.graph_readout(local_feature, edge_index, edge_feature)
+        global_feature = global_mean_pool(global_feature, batch)
         global_feature = self.graph_linear(global_feature)
 
         return local_feature, global_feature
